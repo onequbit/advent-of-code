@@ -4,6 +4,7 @@ from day1.elf_calories import get_elves, get_top_elves
 from day2.roshambo import run_game_1, run_game_2
 from day3.rucksack_reorg import find_mispacked, get_badges
 from day4.overlap_pairs import count_alloverlaps, count_fullycontained
+from day5.stack_moving import find_stackresults, find_newstackresults
 
 
 elves = get_elves()
@@ -21,3 +22,6 @@ print(f"day 3b: {sum(get_badges())}")
 
 print(f"day 4a: {count_fullycontained()}")
 print(f"day 4b: {count_alloverlaps()}")
+
+print(f"day5a: {find_stackresults()}")
+print(f"day5b: {find_newstackresults()}")
