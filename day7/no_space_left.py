@@ -4,7 +4,7 @@ from enum import Enum
 import re
 import json
 
-INPUT_FILE_NAME = join(dirname(abspath(__file__)),'example.txt')
+INPUT_FILE_NAME = join(dirname(abspath(__file__)),'input.txt')
 
 class ConsoleLine(Enum):
     LS = 1
@@ -37,12 +37,13 @@ def get_parents(this_path):
     for index, _ in enumerate(parts):
         path = '/' + '/'.join(parts[:index]) + '/'
         parents.append(path)
-    return reversed(parents)
+    parents = [parent for parent in list(reversed(parents)) if parent != '//']
+    return list(reversed(parents))
 
 def has_children(this_path:str, directories:dict):
     other_paths = directories.keys()
     for path in other_paths:
-        if len(path) > len(this_path) and path.startswith(this_path):
+        if path.startswith(this_path) and len(path) > len(this_path):
             return True
     return False
 
@@ -70,7 +71,6 @@ def day7a():
     input_lines = get_input()
     directory = {}
     directories = []
-    skipdir = ''
     for line in input_lines:
         parts = line.split()
         if parts[0] == "$" and parts[1] == 'cd':
@@ -79,37 +79,27 @@ def day7a():
                 directories.pop(-1)
                 new_dir = collapsed_path(directories)
                 print(f"old_dir: {old_dir}, new_dir: {new_dir}")
-                skipdir = ''
-            elif skipdir == '':
+            else:
                 directories.append(parts[2])
                 path = collapsed_path(directories)
                 directory[path] = dict(size=0, files=[])
                 print(f"new dir: {path}, size: {directory[path]}")
-        elif parts[0].isnumeric() and skipdir == '':
+        elif parts[0].isnumeric(): 
             path = collapsed_path(directories)
             file_entry = dict(path=path, name = parts[1], size = parts[0])
             directory[path]['files'] += [file_entry]
             filesize = int(file_entry['size'])
             print(f"file: {file_entry}, size: {filesize}")
             directory[path]['size'] += filesize
-                
-    # print(json.dumps(directory, indent=4))
-    
-    # for entry in directory.keys():
-    #     if entry == '//':
-    #         continue
-    #     size = int(directory[entry]['size'])
-    #     if size <= limit: #  and get_parent(entry) not in sizes.keys():
-    #         sizes[entry] = size
+            for parent in get_parents(path):
+                directory[parent]['size'] += filesize
 
-    # while len(directory.keys()) > 0:
-    #     key = list(directory.keys())[-1]
-    #     subdir = directory[key]
-    #     total_size += subdir['size']
-    #     directory.pop(key)
-
-    print(total_size)
-    print(json.dumps(directory, indent=4))
+    for entry in directory.keys():
+        parents = get_parents(entry) 
+        size = directory[entry]['size']
+        if size > 0 and size <= limit:
+            total_size += size
+            print(f"entry:{entry}, size:{size}, parents:{parents}")
 
     return total_size
 
