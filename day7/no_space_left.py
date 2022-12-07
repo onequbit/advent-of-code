@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from os.path import abspath, dirname, join
 import json
+import copy
 
 INPUT_FILE_NAME = join(dirname(abspath(__file__)),'input.txt')
 
@@ -47,9 +48,7 @@ def get_children(this_path:str, directories:dict):
     children = list(set(children))
     return children
 
-def day7a():
-    limit = 100000
-    total_size = 0
+def get_directory():    
     input_lines = get_input()
     directory = {}
     directories = []
@@ -57,9 +56,7 @@ def day7a():
         parts = line.split()
         if parts[0] == "$" and parts[1] == 'cd':
             if (parts[2]) == '..':
-                old_dir = collapsed_path(directories)
                 directories.pop(-1)
-                new_dir = collapsed_path(directories)
             else:
                 directories.append(parts[2])
                 path = collapsed_path(directories)
@@ -73,49 +70,32 @@ def day7a():
             for parent in get_parents(path):
                 directory[parent]['size'] += filesize
                 directory[parent]['child_paths'] += [path]
+    return directory
+    
 
+def day7a():
+    limit = 100000
+    total_size = 0
+    directory = get_directory()
     for entry in directory.keys():
         size = directory[entry]['size']
         if size > 0 and size <= limit:
             total_size += size
-
     return total_size
 
-
 def day7b():
+
     target = 30000000
-    input_lines = get_input()
-    directory = {}
-    directories = []
-    for line in input_lines:
-        parts = line.split()
-        if parts[0] == "$" and parts[1] == 'cd':
-            if (parts[2]) == '..':
-                old_dir = collapsed_path(directories)
-                directories.pop(-1)
-                new_dir = collapsed_path(directories)
-            else:
-                directories.append(parts[2])
-                path = collapsed_path(directories)
-                directory[path] = dict(size=0, files=[])
-        elif parts[0].isnumeric(): 
-            path = collapsed_path(directories)
-            file_entry = dict(path=path, name = parts[1], size = parts[0])
-            directory[path]['files'] += [file_entry]
-            filesize = int(file_entry['size'])
-            directory[path]['size'] += filesize
-            parent = get_parent(path)
+    directory = get_directory()
     
     print(json.dumps(directory, indent=4))
 
-    directory_copy = directory.copy()
-    keys = list(directory_copy.keys())
+    directory_copy = copy.deepcopy(directory)
+    keys = list(set(directory_copy.keys()))
     root_paths = 0
     while len(keys) > root_paths:
+        print(len(keys), root_paths)
         key = keys.pop(-1)
-        if key not in directory_copy.keys():
-            continue
-        
         parent = get_parent(key)
         if parent == '//':
             root_paths += 1
@@ -123,14 +103,14 @@ def day7b():
         children = get_children(key, directory_copy)
         if len(children) == 0:            
             directory_copy[parent]['size'] += int(directory_copy[key]['size'])
-            directory_copy.pop(key)
-            keys = list(directory_copy.keys())
+            del directory_copy[key]
+            keys = list(set(directory_copy.keys()))
         else:
-            keys += children
+            keys = list(set(list(directory_copy.keys()) + children))
     
-    for key in list(directory_copy.keys()):
-        entry = directory_copy[key]
-        print(key, json.dumps(entry))
+    # for key in list(directory_copy.keys()):
+    #     entry = directory_copy[key]
+    #     print(key, json.dumps(entry))
 
 
 
