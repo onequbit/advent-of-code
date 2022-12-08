@@ -141,19 +141,27 @@ def day7a(input_file):
     sizes = [int(size) for _,size in sizes]
     return sum(sizes)
 
-def show_size_tree(tree:DirectoryNode):
+def day7b(input_file:str):
+    target = 30000000
+    tree = build_tree(input_file)
+    child_sizes = []
     for key in tree.children.keys():
         child = tree.find(key)
-        print(f"{child.path} --> {child.get_size()} :: ")
-        show_size_tree(child)
-        print("-" * len(child.path))
-
-def day7b(input_file:str):
-    target = 8381165
-    tree = build_tree(input_file)
-
-    print(tree)
-    # all_branches = tree.find_children()
+        child_sizes.append((child.path, child.get_size()))
+    print(*child_sizes, sep='\n')
+    print(". . .")
+    selected = [(path, size) for path,size in child_sizes if size <= target]
+    selected, _ = sorted(selected, key=lambda a: a[1])[-1]
+    print(selected)
+    children = tree.find('/ctd').find_children()
+    total_size = 0
+    for child in children:
+        node = tree.find(child)
+        total_size += node.get_size()
+        # print(child, node.get_size())
+    return total_size
+    # print(tree)
+    all_branches = tree.find_children()
     # path_sizes = []
     # for key in all_branches:
     #     size = tree.find(key).get_size()
@@ -215,7 +223,7 @@ if __name__ == '__main__':
     # print("#" * 120)
     # print("#" * 120)
     # print("#" * 120)
-    # print(f"day 7b:\n{day7b(input_file)}")
-    _ = day7b(input_file)
+    print(f"day 7b:\n{day7b(input_file)}")
+    # _ = day7b(input_file)
     
     
