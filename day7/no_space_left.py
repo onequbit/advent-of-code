@@ -3,7 +3,7 @@ from os.path import abspath, dirname, join
 import json
 import copy
 
-INPUT_FILE_NAME = join(dirname(abspath(__file__)),'input.txt')
+INPUT_FILE_NAME = join(dirname(abspath(__file__)),'example.txt')
 
 def get_input():
     lines = []
@@ -60,7 +60,10 @@ def get_directory():
             else:
                 directories.append(parts[2])
                 path = collapsed_path(directories)
-                directory[path] = dict(size=0, files=[], child_paths=[])
+                directory[path] = {}
+                directory[path]['size'] = 0
+                directory[path]['files'] = []
+                directory[path]['child_paths'] = []
         elif parts[0].isnumeric(): 
             path = collapsed_path(directories)
             file_entry = dict(path=path, name = parts[1], size = parts[0])
@@ -71,7 +74,37 @@ def get_directory():
                 directory[parent]['size'] += filesize
                 directory[parent]['child_paths'] += [path]
     return directory
-    
+
+def get_directory_b():    
+    input_lines = get_input()
+    directory = {}
+    directories = []
+    for line in input_lines:
+        parts = line.split()
+        if parts[0] == "$" and parts[1] == 'cd':
+            if (parts[2]) == '..':
+                directories.pop(-1)
+            else:
+                directories.append(parts[2])
+                path = collapsed_path(directories)
+                directory[path] = dict(size=0, child_paths=[])
+        elif parts[0].isnumeric(): 
+            path = collapsed_path(directories)
+            filesize = int(parts[0])
+            directory[path]['size'] += filesize
+    return directory
+
+@staticmethod
+def gettotalsize(path:str, directory:dict):
+    entry = directory[path]
+    if entry['child_paths'] == 0:
+        parent = directory[get_parent(path)]
+        parent['size'] += entry['size']
+        # parent['child_paths'].pop(path)
+    else:
+        for child in entry['child_paths']:
+            gettotalsize(child, directory)
+    return directory
 
 def day7a():
     limit = 100000
@@ -80,42 +113,40 @@ def day7a():
     for entry in directory.keys():
         size = directory[entry]['size']
         if size > 0 and size <= limit:
+            print(entry, size)
             total_size += size
     return total_size
 
 def day7b():
-
-    target = 30000000
+    target = 8381165
+    target_path = ''
+    path_sizes = {}
     directory = get_directory()
+    for entry in directory.keys():
+        this_dir = directory[entry]
+        children = get_children(entry, directory)
+        # print(entry, children)
+        this_size = this_dir['size']
+        # for child in children:
+        #     child_entry = directory[child]
+        #     this_size += child_entry['size']
+        path_sizes[str(this_size)] = entry
+    # print(path_sizes)
+    sizes = list(sorted([int(key) for key in path_sizes.keys()]))
+    print(sizes)
+    for size in sizes:
+        if size <= target:
+            path = path_sizes[str(size)]
+            # print(path, size)
+            print(f"*** {path} ***\n{directory[path]}")
+    # target_path = path_sizes[str(max(sizes))]
+    return target_path
     
-    print(json.dumps(directory, indent=4))
-
-    directory_copy = copy.deepcopy(directory)
-    keys = list(set(directory_copy.keys()))
-    root_paths = 0
-    while len(keys) > root_paths:
-        print(len(keys), root_paths)
-        key = keys.pop(-1)
-        parent = get_parent(key)
-        if parent == '//':
-            root_paths += 1
-            continue
-        children = get_children(key, directory_copy)
-        if len(children) == 0:            
-            directory_copy[parent]['size'] += int(directory_copy[key]['size'])
-            del directory_copy[key]
-            keys = list(set(directory_copy.keys()))
-        else:
-            keys = list(set(list(directory_copy.keys()) + children))
-    
-    # for key in list(directory_copy.keys()):
-    #     entry = directory_copy[key]
-    #     print(key, json.dumps(entry))
-
-
-
-
+        
 if __name__ == '__main__':
-    print(f"day 7a: {day7a()}") # day 7a: 1427048
-    
+    print()
+    # print(f"day 7a: {day7a()}") # day 7a: 1427048
     print(f"day 7b: {day7b()}")
+
+    
+    
