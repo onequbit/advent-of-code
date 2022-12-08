@@ -5,9 +5,9 @@ import copy
 
 INPUT_FILE_NAME = join(dirname(abspath(__file__)),'example.txt')
 
-def get_input():
+def get_input(input_file:str):
     lines = []
-    with open(INPUT_FILE_NAME, mode='r') as input_file:
+    with open(input_file, mode='r') as input_file:
         for line in input_file.readlines():
             lines.append(line.strip())
     return lines
@@ -48,8 +48,8 @@ def get_children(this_path:str, directories:dict):
     children = list(set(children))
     return children
 
-def get_directory():    
-    input_lines = get_input()
+def get_directory(input_file:str):    
+    input_lines = get_input(input_file)
     directory = {}
     directories = []
     for line in input_lines:
@@ -75,41 +75,11 @@ def get_directory():
                 directory[parent]['child_paths'] += [path]
     return directory
 
-def get_directory_b():    
-    input_lines = get_input()
-    directory = {}
-    directories = []
-    for line in input_lines:
-        parts = line.split()
-        if parts[0] == "$" and parts[1] == 'cd':
-            if (parts[2]) == '..':
-                directories.pop(-1)
-            else:
-                directories.append(parts[2])
-                path = collapsed_path(directories)
-                directory[path] = dict(size=0, child_paths=[])
-        elif parts[0].isnumeric(): 
-            path = collapsed_path(directories)
-            filesize = int(parts[0])
-            directory[path]['size'] += filesize
-    return directory
 
-@staticmethod
-def gettotalsize(path:str, directory:dict):
-    entry = directory[path]
-    if entry['child_paths'] == 0:
-        parent = directory[get_parent(path)]
-        parent['size'] += entry['size']
-        # parent['child_paths'].pop(path)
-    else:
-        for child in entry['child_paths']:
-            gettotalsize(child, directory)
-    return directory
-
-def day7a():
+def day7a(input_file):
     limit = 100000
     total_size = 0
-    directory = get_directory()
+    directory = get_directory(input_file)
     for entry in directory.keys():
         size = directory[entry]['size']
         if size > 0 and size <= limit:
@@ -117,36 +87,9 @@ def day7a():
             total_size += size
     return total_size
 
-def day7b():
-    target = 8381165
-    target_path = ''
-    path_sizes = {}
-    directory = get_directory()
-    for entry in directory.keys():
-        this_dir = directory[entry]
-        children = get_children(entry, directory)
-        # print(entry, children)
-        this_size = this_dir['size']
-        # for child in children:
-        #     child_entry = directory[child]
-        #     this_size += child_entry['size']
-        path_sizes[str(this_size)] = entry
-    # print(path_sizes)
-    sizes = list(sorted([int(key) for key in path_sizes.keys()]))
-    print(sizes)
-    for size in sizes:
-        if size <= target:
-            path = path_sizes[str(size)]
-            # print(path, size)
-            print(f"*** {path} ***\n{directory[path]}")
-    # target_path = path_sizes[str(max(sizes))]
-    return target_path
-    
-        
+
 if __name__ == '__main__':
-    print()
-    # print(f"day 7a: {day7a()}") # day 7a: 1427048
-    print(f"day 7b: {day7b()}")
+    print(f"day 7a: {day7a('input.txt')}") # day 7a: 1427048
 
     
     
