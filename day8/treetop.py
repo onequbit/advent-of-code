@@ -46,13 +46,8 @@ class TreeMap:
         return top_edge or bot_edge or lft_edge or rgt_edge
 
     def transpose(self):
-        t_map = [0] * self.size
-        for row in range(self.size):
-            row_cells = []
-            for col in range(self.size):
-                row_cells.append(self.get_cell(col,row))
-            t_map[row] = row_cells
-        return t_map
+        m = self.map
+        return [[m[j][i] for j in range(len(m))] for i in range(len(m[0]))]
 
     @staticmethod
     def load(input_file):
@@ -62,73 +57,59 @@ class TreeMap:
                 lines.append(line.strip())
         return lines
 
-def spiral_index(some_length):
-    temp_array = [i for i in range(0,some_length)]
-    new_array = []
-    while len(temp_array) >0:
-        
-        new_array.append(temp_array[0])
-        new_array.append(temp_array[-1])
-        temp_array = temp_array[1:-1]
-        if len(temp_array) == 1:
-            new_array.append(temp_array[0])
-            break
-    return new_array
-
-
-def scan_trees(trees:list):
-    hidden = []
-    left = trees[0]
-    right = trees[-1]
-    inner_trees = trees[1:-1]
-    if len(trees) == 0:
-        return hidden
-    indexes = [i for i in spiral_index(len(trees))][2:]
-    for index in indexes:
-        tree = abs(trees[index])
-        print(f"index:{index}, value:{tree}, left:{left}, inner:{inner_trees}, right:{right} >")
-        if (tree <= left and tree < right) or (tree < left and tree <= right):
-            hidden.append(tree)
-            trees[index+1] *= -1
-        if tree > left:
-            left = tree
-        if tree > right:
-            right = tree
-        print(f"index:{index}, value:{tree}, left:{left}, inner:{inner_trees}, right:{right} <-")
-    print()
+def scan_row(tree_row:list):
+    height = 0
+    hidden = [0] * len(tree_row)
+    hidden[0] = -1
+    hidden[-1] = -1
+    
+    for index, tree in enumerate(tree_row):
+        if tree > 0 and tree > height:
+            height = tree
+        else:
+            hidden[index] += 1
+    # hidden_r2l = [0] * len(tree_row)
+    height = 0
+    for index in range(len(tree_row)-1,-1,-1):
+        tree = tree_row[index]
+        if tree > height:
+            height = tree
+        else:
+            hidden[index] += 1
     return hidden
-        
-        
 
-
-
-
-
+def transpose(some_array):
+    m = some_array
+    return [[m[j][i] for j in range(len(m))] for i in range(len(m[0]))]
 
 def day8a(input_file):
     treemap = TreeMap(input_file)
-    print(treemap)
-    # print()
-    # treemap.show_t()
-
-    # for n in range(treemap.size):
-    #     print(treemap.get_cell(n,n))
+    treemap.show()
 
     print("scanning rows...")
-    for row in treemap.map:
-        scan_trees(row)
-    print(treemap)
-    print("scanning columns...")
-    for row in treemap.transpose():
-        scan_trees(row)
-    print(treemap)
-    
-    for test in range(10, 14):
-        test_list = [i for i in range(0,test)]
-        print(test_list)
-        print(spiral_index(test))
 
-    return ''
+    hidden_rows = [0] * treemap.size
+    for index, row in enumerate(treemap.map):
+        hidden_rows[index] = scan_row(row)
+    print(*hidden_rows, sep='\n')
+    print("scanning columns...")
+    columns_map = transpose(treemap.map)
+    hidden_columns = [0] * treemap.size
+    for index, column in enumerate(columns_map):
+        hidden_columns[index] = scan_row(column)
+    hidden_columns = transpose(hidden_columns)
+    print(*hidden_columns, sep='\n')
+    print("combined")
+    hidden = []
+    for row in range(treemap.size):
+        combined_row = [(a,b) for a,b in zip(hidden_rows[row], hidden_columns[row])]
+        print(combined_row)
+        combined_hidden = [1 if a==2 and b==2 else 0 for a,b in combined_row]
+        hidden.append(combined_hidden)
+    print(*hidden, sep='\n')
+    total_hidden = sum([sum(h) for h in hidden])
+    total_visible = (treemap.size ** 2) - total_hidden
+    return total_visible
 
 
 def day8b(input_file):
@@ -138,7 +119,11 @@ def day8b(input_file):
 
 if __name__ == "__main__":
     
-    # input_file = 'input.txt'
-    input_file = 'example.txt'
+    input_file = 'input.txt'
+    # input_file = 'example.txt'
     print(day8a(input_file))
-    print(day8b(input_file))
+    # print(day8b(input_file))
+    # foo_table = [[1,2,3,4,5],[6,7,8,9,0],['a','b','c','d','e'],[1,2,3,4,5],[6,7,8,9,0]]
+    # print(*foo_table, sep='\n')
+    # bar_rable = transpose(foo_table)
+    # print(*bar_rable, sep='\n')
