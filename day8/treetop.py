@@ -53,13 +53,14 @@ class TreeMap:
         if row == 0:
             return []
         rows = [r for r in range(0,row)][::-1]
-        for row in rows:
-            height = self.map[row][column]
-            if len(viewable)>0 and viewable[-1] > height:
-                break
+        print(self.map[row])
+        for r in rows:
+            height = self.map[r][column]
+            print(f"north_view row: {r} height: {height}")
             viewable.append(height)
             if height >= my_height:
                 break
+        print(f"north_view viewable: {viewable}")
         return viewable
 
     def south_view(self,row,column):
@@ -70,11 +71,10 @@ class TreeMap:
         rows = [r for r in range(row+1,self.size)]
         for r in rows:
             height = self.map[r][column]
-            if len(viewable)>0 and viewable[-1] >= height:
-                break
             viewable.append(height)
             if height >= my_height:
                 break
+        print(f"south_view viewable: {viewable}")
         return viewable
 
     def west_view(self,row,column):
@@ -85,11 +85,10 @@ class TreeMap:
         cols = [c for c in range(0,column)][::-1]
         for c in cols:
             height = self.map[row][c]
-            if len(viewable)>0 and viewable[-1] > height:
-                break
             viewable.append(height)
             if height >= my_height:
                 break
+        print(f"west_view viewable: {viewable}")
         return viewable
 
     def east_view(self,row,column):
@@ -100,32 +99,30 @@ class TreeMap:
         cols = [c for c in range(column+1,self.size)]
         for c in cols:
             height = self.map[row][c]
-            if len(viewable)>0 and viewable[-1] > height:
-                break
             viewable.append(height)
             if height >= my_height:
                 break
+        print(f"east_view viewable: {viewable}")
         return viewable
 
     def scenic_score(self, row, column):
+        my_height = self.map[row][column]
         north = self.north_view(row,column)
         south = self.south_view(row,column)
         west = self.west_view(row,column)
         east = self.east_view(row,column)
-        print(f"north: {north}, south: {south}, west: {west}, east: {east}")
         north_score = len(north)
-        if north_score == 0:
-            north_score = 1
+        # if north_score == 0:
+        #     north_score = 1
         south_score = len(south)
-        if south_score == 0:
-            south_score = 1
+        # if south_score == 0:
+        #     south_score = 1
         west_score = len(west)
-        if west_score == 0:
-            west_score = 1
+        # if west_score == 0:
+        #     west_score = 1
         east_score = len(east)
-        if east_score == 0:
-            east_score = 1
-        print(f"north_score: {north_score}, south_score: {south_score}, west_score: {west_score}, east_score: {east_score}")
+        # if east_score == 0:
+        #     east_score = 1
         return north_score * south_score * west_score * east_score
 
     def show(self):
@@ -206,17 +203,36 @@ def day8a(input_file):
 
 
 def day8b(input_file):
+    maximum_score = 0
     treemap = TreeMap(input_file)
-    treemap.show()
     print('\n...')
+
     max_scores = []
-    scores = []
+    all_scores = []
     for row in range(treemap.size):
+        scores = []
         for col in range(treemap.size):
             scores += [treemap.scenic_score(row,col)]
         max_scores += [max(scores)]
-    
-    return max(max_scores)
+        all_scores.append(scores)
+        print(all_scores)
+    maximum_score = max(max_scores)
+    row = max_scores.index(maximum_score)
+    column = all_scores[row].index(maximum_score)
+    print(row, column)
+    print(treemap.scenic_score(row,column))
+
+    # test_row, test_col = 29,48
+    # if input_file == 'input.txt':
+    #     print(f"test row: {test_row}, test col: {test_col}")
+    #     print("value:", treemap.map[test_row][test_col])
+    #     print("scenic score:", treemap.scenic_score(test_row, test_col))
+    #     print(treemap.north_view(test_row, test_col))
+    #     print(treemap.south_view(test_row, test_col))
+    #     print(treemap.west_view(test_row, test_col))
+    #     print(treemap.east_view(test_row, test_col))
+
+    return maximum_score
 
 
 if __name__ == "__main__":
@@ -224,8 +240,14 @@ if __name__ == "__main__":
     input_file = 'input.txt'
     # input_file = 'example.txt'
     print(day8a(input_file)) # answer --> 1779
-    print(day8b(input_file))
-    # foo_table = [[1,2,3,4,5],[6,7,8,9,0],['a','b','c','d','e'],[1,2,3,4,5],[6,7,8,9,0]]
-    # print(*foo_table, sep='\n')
-    # bar_rable = transpose(foo_table)
-    # print(*bar_rable, sep='\n')
+    print(day8b(input_file)) # answer --> 172224
+    
+    
+    """
+    wrong answers:
+    180, 432, (49^4), 1485, 13860, 76032
+
+    """
+    
+   
+    # 49 x 49 x 49 x 49 = 5764801
