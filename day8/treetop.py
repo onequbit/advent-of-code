@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 from os.path import abspath, dirname, join
 
-# class TreeCell:
-#     def __init__(self, row, col, value):
-#         self.row = row
-#         self.col = col
-#         self.value = value
-
 class TreeMap:
     def __init__(self, input_file:str):
         lines = TreeMap.load(input_file)
         self.size = len(lines)
         self.map = [[0]*len(lines)] * len(lines)
+        for row, row_str in enumerate(lines):
+            row_cells = []
+            for col, char in enumerate(row_str):
+                row_cells.append(int(char))
+            self.map[row] = row_cells
+
+        self.map2 = [[{}] * len(lines)] * len(lines)
         for row, row_str in enumerate(lines):
             row_cells = []
             for col, char in enumerate(row_str):
@@ -24,6 +25,108 @@ class TreeMap:
             lines += [str(row)]
         
         return '\n'.join(lines)
+
+    def neighbors(self, row:int, column:int):
+        top, bottom, left, right = 0,0,0,0
+        if row == 0: 
+            top = -1
+        else:
+            top = self.map[row-1][column]
+        if row == self.size-1:
+            bottom == -1
+        else:
+            bottom = self.map[row+1][column]
+        if column == 0: 
+            left = -1
+        else:
+            left = self.map[row][column-1]
+        if column == self.size-1:
+            right == -1
+        else:
+            right = self.map[row][column+1]
+        
+        return { 'top':top, 'left':left, 'right':right, 'bottom':bottom }
+
+    def north_view(self,row,column):
+        viewable = []
+        my_height = self.map[row][column]
+        if row == 0:
+            return []
+        rows = [r for r in range(0,row)][::-1]
+        for row in rows:
+            height = self.map[row][column]
+            if len(viewable)>0 and viewable[-1] > height:
+                break
+            viewable.append(height)
+            if height >= my_height:
+                break
+        return viewable
+
+    def south_view(self,row,column):
+        viewable = []
+        my_height = self.map[row][column]
+        if row == self.size - 1:
+            return []
+        rows = [r for r in range(row+1,self.size)]
+        for r in rows:
+            height = self.map[r][column]
+            if len(viewable)>0 and viewable[-1] >= height:
+                break
+            viewable.append(height)
+            if height >= my_height:
+                break
+        return viewable
+
+    def west_view(self,row,column):
+        viewable = []
+        my_height = self.map[row][column]
+        if column == 0:
+            return []
+        cols = [c for c in range(0,column)][::-1]
+        for c in cols:
+            height = self.map[row][c]
+            if len(viewable)>0 and viewable[-1] > height:
+                break
+            viewable.append(height)
+            if height >= my_height:
+                break
+        return viewable
+
+    def east_view(self,row,column):
+        viewable = []
+        my_height = self.map[row][column]
+        if column == self.size - 1:
+            return []
+        cols = [c for c in range(column+1,self.size)]
+        for c in cols:
+            height = self.map[row][c]
+            if len(viewable)>0 and viewable[-1] > height:
+                break
+            viewable.append(height)
+            if height >= my_height:
+                break
+        return viewable
+
+    def scenic_score(self, row, column):
+        north = self.north_view(row,column)
+        south = self.south_view(row,column)
+        west = self.west_view(row,column)
+        east = self.east_view(row,column)
+        print(f"north: {north}, south: {south}, west: {west}, east: {east}")
+        north_score = len(north)
+        if north_score == 0:
+            north_score = 1
+        south_score = len(south)
+        if south_score == 0:
+            south_score = 1
+        west_score = len(west)
+        if west_score == 0:
+            west_score = 1
+        east_score = len(east)
+        if east_score == 0:
+            east_score = 1
+        print(f"north_score: {north_score}, south_score: {south_score}, west_score: {west_score}, east_score: {east_score}")
+        return north_score * south_score * west_score * east_score
 
     def show(self):
         print()
@@ -68,7 +171,6 @@ def scan_row(tree_row:list):
             height = tree
         else:
             hidden[index] += 1
-    # hidden_r2l = [0] * len(tree_row)
     height = 0
     for index in range(len(tree_row)-1,-1,-1):
         tree = tree_row[index]
@@ -84,45 +186,45 @@ def transpose(some_array):
 
 def day8a(input_file):
     treemap = TreeMap(input_file)
-    treemap.show()
-
-    print("scanning rows...")
-
     hidden_rows = [0] * treemap.size
     for index, row in enumerate(treemap.map):
         hidden_rows[index] = scan_row(row)
-    print(*hidden_rows, sep='\n')
-    print("scanning columns...")
     columns_map = transpose(treemap.map)
     hidden_columns = [0] * treemap.size
     for index, column in enumerate(columns_map):
         hidden_columns[index] = scan_row(column)
     hidden_columns = transpose(hidden_columns)
-    print(*hidden_columns, sep='\n')
-    print("combined")
     hidden = []
     for row in range(treemap.size):
         combined_row = [(a,b) for a,b in zip(hidden_rows[row], hidden_columns[row])]
-        print(combined_row)
         combined_hidden = [1 if a==2 and b==2 else 0 for a,b in combined_row]
         hidden.append(combined_hidden)
-    print(*hidden, sep='\n')
     total_hidden = sum([sum(h) for h in hidden])
     total_visible = (treemap.size ** 2) - total_hidden
-    return total_visible
+    return total_visible # answer --> 1779
+
 
 
 def day8b(input_file):
     treemap = TreeMap(input_file)
-    return ''
+    treemap.show()
+    print('\n...')
+    max_scores = []
+    scores = []
+    for row in range(treemap.size):
+        for col in range(treemap.size):
+            scores += [treemap.scenic_score(row,col)]
+        max_scores += [max(scores)]
+    
+    return max(max_scores)
 
 
 if __name__ == "__main__":
     
     input_file = 'input.txt'
     # input_file = 'example.txt'
-    print(day8a(input_file))
-    # print(day8b(input_file))
+    print(day8a(input_file)) # answer --> 1779
+    print(day8b(input_file))
     # foo_table = [[1,2,3,4,5],[6,7,8,9,0],['a','b','c','d','e'],[1,2,3,4,5],[6,7,8,9,0]]
     # print(*foo_table, sep='\n')
     # bar_rable = transpose(foo_table)
