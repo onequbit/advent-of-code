@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from math import dist
 
@@ -19,9 +19,11 @@ def day9a(input_file):
     motions = get_input(input_file)
     headX, headY = 0,0
     tailX, tailY = 0,0
+    allsteps = 0
     for m in motions:
         d, steps = m.split()
         steps = int(steps)
+        allsteps += steps
         for s in range(steps):            
             headX -= 1 if d == 'L' else 0
             headX += 1 if d == 'R' else 0
@@ -35,32 +37,33 @@ def day9a(input_file):
                 tailX += 1 if d == 'R' else 0
                 tailY += 1 if d == 'U' else 0
                 tailY -= 1 if d == 'D' else 0
-            visited.add( (tailX, tailY) )
-        # oldX, oldY = tailX, tailY
-        # visited.add( (oldX, oldY) )
-        # if distance > 1:
-        #     if d == 'L':
-        #         tailX -= (steps)
-        #         for x in range(oldX, tailX-1, -1):
-        #             visited.add( (x, tailY) )
-        #     if d == 'R':
-        #         tailX += (steps)
-        #         for x in range(oldX, tailX+1):
-        #             visited.add( (x, tailY) )
-        #     if d == 'U':
-        #         tailY += (steps)
-        #         for y in range(oldY, tailY-1, -1):
-        #             visited.add( (tailX, y) )
-        #     if d == 'D':
-        #         tailY -= (steps)
-        #         for y in range(oldY, tailY-1):
-        #             visited.add( (tailX, y) )
-        # visited.add( (tailX, tailY) )
+            # visited.add( (tailX, tailY) )
+            # oldX, oldY = tailX, tailY
+            # visited.add( (oldX, oldY) )
+            # if distance > 1:
+            #     if d == 'L':
+            #         tailX -= (steps-1)
+            #         for x in range(oldX, tailX-1, -1):
+            #             visited.add( (x, tailY) )
+            #     if d == 'R':
+            #         tailX += (steps-1)
+            #         for x in range(oldX, tailX+1):
+            #             visited.add( (x, tailY) )
+            #     if d == 'U':
+            #         tailY += (steps-1)
+            #         for y in range(oldY, tailY-1, -1):
+            #             visited.add( (tailX, y) )
+            #     if d == 'D':
+            #         tailY -= (steps-1)
+            #         for y in range(oldY, tailY+1):
+            #             visited.add( (tailX, y) )
+            # visited.add( (tailX, tailY) )
         print(f"{direction[d]} {steps}, O:{(oldX,oldY)}, T:{(tailX,tailY)}, visited: {visited}")
-
-    print(visited)
+    print(allsteps)
+    # print(visited)
     print(len(visited))
-    return
+    print(allsteps - len(visited))
+    return allsteps - len(visited)
 
 
 def day9b(input_file):
