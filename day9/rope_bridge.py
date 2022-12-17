@@ -26,7 +26,7 @@ STATES = [ 'Q', 'U', 'E', 'L', '_', 'R', 'Z', 'D', 'C' ]
 # Z D C
 
 class RopeBridge:
-    def __init__(self):
+    def __init__(self, segments=1):
         self.x = 0
         self.y = 0
         self.tx = 0
@@ -36,6 +36,7 @@ class RopeBridge:
         self.state = RopeState.STILL
         self.prev_state = RopeState.STILL
         self.visited = set()
+        self.next_segment = RopeBridge(segments-1) if segments > 0 else None
 
     def __repr__(self):
         return str({
@@ -49,18 +50,24 @@ class RopeBridge:
             'visited':self.visited
         })
 
-    def get_tail_distance(self):
-        return dist((self.x,self.y),(self.tx,self.ty))
+    def get_tail_distance(self, to_x, to_y):
+        return dist((self.x,self.y),(to_x, to_y))
 
     def move_tail(self): #, direction:RopeState):
         self.tx, self.ty = self.px, self.py 
         self.visited.add( (self.tx, self.ty) )
 
-    def update_tail(self):
+    def update_tail(self, steps:int):
+        if steps == 0:
+            return
         self.visited.add( (self.tx, self.ty) )
-        tail_distance = self.get_tail_distance()
+        tail_distance = self.get_tail_distance(self.tx, self.ty)
         if tail_distance > sqrt(2):
-            self.move_tail() # self.tail_state)
+            self.move_tail()
+        if self.next_segment is not None:
+            self.next_segment.x = self.tx
+            self.next_segment.y = self.ty
+            self.next_segment.update_tail(steps-1)
 
     def go_up(self, steps:int, tail=False):
         if steps == 0:
@@ -97,7 +104,7 @@ class RopeBridge:
             self.prev_state = self.state
             self.px, self.py = self.x, self.y
             NEXT_MOVEMENT[direction](steps=1)
-            self.update_tail()
+            self.update_tail(steps-1)
 
 def get_input(input_file):
     lines = []
@@ -116,9 +123,14 @@ def day9a(input_file):
 
 
 def day9b(input_file):
-
-
-    return
+    rope = RopeBridge(segments=10)
+    for motion in get_input(input_file):
+        rope.move(motion)
+    segment = rope
+    while segment.next_segment is not None:
+        segment = segment.next_segment
+        print(segment.visited)
+    return len(set(segment.visited))
 
 
 if __name__ == "__main__":
@@ -126,4 +138,6 @@ if __name__ == "__main__":
     input_file = 'input.txt'
     # input_file = 'example.txt'
     print(day9a(input_file)) # <-- 6563  :)
-    print(day9b(input_file))
+    # input_file2 = 'input.txt'
+    input_file2 = 'example2.txt'
+    print(day9b(input_file2))
