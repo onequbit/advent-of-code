@@ -12,3 +12,4 @@ def load_input_lines(filename):
         filename = newpath
     with open(filename, 'r', encoding='utf-8') as input:
         return [line.strip() for line in input.readlines()]
+    

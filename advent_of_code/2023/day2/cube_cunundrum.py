@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from advent_lib import load_input_lines
+from advent_of_code import load_input_lines
 
 COLORS = ['blue', 'green', 'red']
 TEST_COUNTS = {'blue': 14, 'green':13, 'red': 12}
