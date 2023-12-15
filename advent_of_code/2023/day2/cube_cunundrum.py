@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import sys
+from os.path import abspath, dirname
+sys.path.append(abspath(dirname("..")))
 from advent_of_code import load_input_lines
 
 COLORS = ['blue', 'green', 'red']
