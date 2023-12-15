@@ -14,7 +14,7 @@ def load_input_lines(filename):
         return [line.strip() for line in input.readlines()]
 
 def number_str_to_list(numbers:str):
-    return [num for num in numbers.strip().split(' ') if num]
+    return [int(num) for num in numbers.strip().split(' ') if num]
     
 def number_str_to_set(numbers:str):
     return set(number_str_to_list(numbers))

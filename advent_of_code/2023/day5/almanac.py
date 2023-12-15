@@ -2,10 +2,39 @@
 
 import sys
 from os.path import abspath, dirname
+import json
 sys.path.append(dirname(abspath("../..")))
 from advent_of_code import load_input_lines
 from advent_of_code import number_str_to_list
 
+
+PHASES = [
+            "soil",
+            "fertilizer",
+            "water",
+            "light",
+            "temperature",
+            "humidity",
+            "location"
+        ]
+
+LAST_PHASE = PHASES[-1]
+
+MAP_SECTIONS = [
+                "seed-to-soil",
+                "soil-to-fertilizer",
+                "fertilizer-to-water",
+                "water-to-light",
+                "light-to-temperature",
+                "temperature-to-humidity",
+                "humidity-to-location"
+            ]
+
+def _next(phase:str):
+    if phase == LAST_PHASE:
+        return None
+    next_phase_index = PHASES.index(phase)+1
+    return PHASES[next_phase_index]
 
 def parse(lines:list):
     data = {}
@@ -15,24 +44,49 @@ def parse(lines:list):
         if line.startswith("seeds:"):
             seeds = line.split(":")[1]
             data["seeds"] = number_str_to_list(seeds)
+            for seed in data["seeds"]:
+                data[str(seed)] = {}
         
-        if line.endswith("map:"):
+        elif line.endswith("map:"):
             map_name = line.split(" ")[0]
-            print(map_name)
             map_line_num = line_num + 1
             map_data = []
             while map_line_num < len(lines) and (map_line := lines[map_line_num]):
-                print(line_num, map_line_num, map_line)
                 line_num = map_line_num
                 map_data.append(number_str_to_list(map_line))
+                
                 map_line_num += 1
             data[map_name] = map_data
         line_num += 1
-
     return data
 
+def parse_mapping(mapping_name:str):
+    [source, destination] = mapping_name.split("-to-")
+    return source, destination
+
+def get_path(seed:int, mapping:str, map_data:dict):
+    mappings = map_data[mapping]
+    for [destination, source, span] in mappings:
+        source_range = list(range(source, source+span))
+        if seed in source_range:
+            offset = seed - source
+            return destination + offset
+    return seed
+        
 if __name__ == "__main__":
     lines = load_input_lines(sys.argv[1])
-    
     data = parse(lines)
+    seed_paths = {}
+    print(data["seeds"])
+    for seed in data["seeds"]:
+        source = seed
+        for phase in PHASES[:-1]:
+            section = f"{phase}-to-{_next(phase)}"
+            destination = get_path(source, section, data)
+            data[str(seed)]["destination"] = destination
+            source = destination
+    data["destinations"] = {}
+    for seed in data["seeds"]:
+        data["destinations"][str(seed)] = data[str(seed)]["destination"]
+    destinations = [data["destinations"][str(seed)] for seed in ]
     print(data)
