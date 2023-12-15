@@ -4,10 +4,7 @@ import sys
 from os.path import abspath, dirname
 sys.path.append(dirname(abspath("../..")))
 from advent_of_code import load_input_lines
-
-def number_str_to_set(numbers:str):
-    numbers = [num for num in numbers.strip().split(' ') if num]
-    return set(sorted(numbers))
+from advent_of_code import number_str_to_set
 
 def count_points(matches:set):
     count = len(matches)
