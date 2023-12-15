@@ -17,17 +17,28 @@ def count_points(matches:set):
 
 if __name__ == "__main__":
     lines = load_input_lines(sys.argv[1])
-    
+    copies = [1]*len(lines)
     winning_numbers, scratch_numbers = [], []
     total_points = 0
-    for line in lines:
+    line_number = 0
+    while line_number < len(lines):
+        line = lines[line_number]
         [winning, scratched] = line.split('|')
         winning = winning.split(':')[1].strip()
         winning = number_str_to_set(winning)
         scratched = number_str_to_set(scratched)
         matches = scratched.intersection(winning)
+        print(f"{line=}... {matches=} --> {count_points(matches)}")
+        print(f"card copies: {len(matches) * copies[line_number]}")
+        for i in range(len(matches)):
+            copies[line_number + 1 + i] += copies[line_number]
+        print(f"{copies=}")
         print(f"{winning=}, {scratched=}")
-        print(f"{matches=} --> {count_points(matches)}")
-        total_points += count_points(matches)
-    print(total_points) # answer: 25651
-
+        
+        card_points = count_points(matches)#  * copies[line_number]
+        total_points += card_points
+        line_number += 1
+    total_cards = sum(copies)
+    print(f"{total_points=}") # answer: 25651
+    print(f"{total_cards=}")
+    # 1139 -> too low
