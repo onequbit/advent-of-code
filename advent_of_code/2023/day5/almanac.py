@@ -91,4 +91,10 @@ if __name__ == "__main__":
     for seed in data["seeds"]:
         data["destinations"][str(seed)] = data[str(seed)]["destination"]
     destinations = [data["destinations"][str(seed)] for seed in data["seeds"]]
+    dereferences = {str(location):seed for seed,location in data["destinations"].items()}
+    locations = [int(location) for location in dereferences.keys()]
+    lowest_location = min(locations)
     print(data["destinations"])
+    print(dereferences)
+    print(dereferences[str(lowest_location)])
+    # 1901414562 -> too high
