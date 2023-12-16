@@ -88,5 +88,5 @@ if __name__ == "__main__":
     data["destinations"] = {}
     for seed in data["seeds"]:
         data["destinations"][str(seed)] = data[str(seed)]["destination"]
-    destinations = [data["destinations"][str(seed)] for seed in ]
+    destinations = [data["destinations"][str(seed)] for seed in data["seeds"]]
     print(data)
