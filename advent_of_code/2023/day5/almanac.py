@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+from tqdm import tqdm
 from os.path import abspath, dirname
 import json
 sys.path.append(dirname(abspath("../..")))
@@ -67,7 +68,7 @@ def parse_mapping(mapping_name:str):
 def get_path(seed:int, mapping:str, map_data:dict):
     mappings = map_data[mapping]
     for [destination, source, span] in mappings:
-        source_range = list(range(source, source+span))
+        source_range = range(source, source+span)
         if seed in source_range:
             offset = seed - source
             return destination + offset
@@ -76,17 +77,18 @@ def get_path(seed:int, mapping:str, map_data:dict):
 if __name__ == "__main__":
     lines = load_input_lines(sys.argv[1])
     data = parse(lines)
+    print(f"{data=}")
     seed_paths = {}
-    print(data["seeds"])
-    for seed in data["seeds"]:
+    for seed in tqdm(data["seeds"]):
         source = seed
-        for phase in PHASES[:-1]:
+        print(f"{source=}")
+        for phase in tqdm(PHASES[:-1]):
             section = f"{phase}-to-{_next(phase)}"
             destination = get_path(source, section, data)
-            data[str(seed)]["destination"] = destination
-            source = destination
+            data[str(source)]["destination"] = destination
+        source = destination
     data["destinations"] = {}
     for seed in data["seeds"]:
         data["destinations"][str(seed)] = data[str(seed)]["destination"]
     destinations = [data["destinations"][str(seed)] for seed in data["seeds"]]
-    print(data)
+    print(data["destinations"])
