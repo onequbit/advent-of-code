@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-from tqdm import tqdm
 from os.path import abspath, dirname
 import json
 sys.path.append(dirname(abspath("../..")))
@@ -19,8 +18,6 @@ PHASES = [
             "location"
         ]
 
-LAST_PHASE = PHASES[-1]
-
 MAP_SECTIONS = [
                 "seed-to-soil",
                 "soil-to-fertilizer",
@@ -32,10 +29,17 @@ MAP_SECTIONS = [
             ]
 
 def _next(phase:str):
-    if phase == LAST_PHASE:
+    if phase == PHASES[-1]:
         return None
     next_phase_index = PHASES.index(phase)+1
     return PHASES[next_phase_index]
+
+def _last(phase:str):
+    if phase == PHASES[0]:
+        return None
+    last_phase_index = PHASES.index(phase)-1
+    return PHASES[last_phase_index]
+
 
 def parse(lines:list):
     data = {}
@@ -79,22 +83,23 @@ if __name__ == "__main__":
     data = parse(lines)
     print(f"{data=}")
     seed_paths = {}
-    for seed in tqdm(data["seeds"]):
+    for seed in data["seeds"]:
         source = seed
         print(f"{source=}")
-        for phase in tqdm(PHASES[:-1]):
+        for phase in PHASES[:-1]:
             section = f"{phase}-to-{_next(phase)}"
             destination = get_path(source, section, data)
             data[str(source)]["destination"] = destination
-        source = destination
+            source = destination
     data["destinations"] = {}
     for seed in data["seeds"]:
         data["destinations"][str(seed)] = data[str(seed)]["destination"]
     destinations = [data["destinations"][str(seed)] for seed in data["seeds"]]
-    dereferences = {str(location):seed for seed,location in data["destinations"].items()}
-    locations = [int(location) for location in dereferences.keys()]
-    lowest_location = min(locations)
-    print(data["destinations"])
-    print(dereferences)
-    print(dereferences[str(lowest_location)])
+    # dereferences = {str(location):seed for seed,location in data["destinations"].items()}
+    # locations = [int(location) for location in dereferences.keys()]
+    # lowest_location = min(destinations)
+    print(f"{destinations=}")
+    # print(f"{dereferences=}")
+    # print(f"{lowest_location=}")
     # 1901414562 -> too high
+    # 403088009 -> too high
