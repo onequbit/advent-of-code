@@ -2,7 +2,6 @@
 
 import sys
 from os.path import abspath, dirname
-import json
 sys.path.append(dirname(abspath("../..")))
 from advent_of_code import load_input_lines
 from advent_of_code import number_str_to_list
@@ -50,8 +49,8 @@ def parse(lines:list):
             seeds = line.split(":")[1]
             data["seeds"] = number_str_to_list(seeds)
             for seed in data["seeds"]:
-                data[str(seed)] = {}
-        
+                data[str(seed)] = {section:{} for section in MAP_SECTIONS}
+
         elif line.endswith("map:"):
             map_name = line.split(" ")[0]
             map_line_num = line_num + 1
@@ -79,6 +78,7 @@ def get_path(seed:int, mapping:str, map_data:dict):
     return seed
         
 if __name__ == "__main__":
+    
     lines = load_input_lines(sys.argv[1])
     data = parse(lines)
     print(f"{data=}")
@@ -86,20 +86,11 @@ if __name__ == "__main__":
     for seed in data["seeds"]:
         source = seed
         print(f"{source=}")
-        for phase in PHASES[:-1]:
-            section = f"{phase}-to-{_next(phase)}"
+        for section in MAP_SECTIONS:
             destination = get_path(source, section, data)
-            data[str(source)]["destination"] = destination
+            data[str(seed)][section] = destination
             source = destination
-    data["destinations"] = {}
-    for seed in data["seeds"]:
-        data["destinations"][str(seed)] = data[str(seed)]["destination"]
-    destinations = [data["destinations"][str(seed)] for seed in data["seeds"]]
-    # dereferences = {str(location):seed for seed,location in data["destinations"].items()}
-    # locations = [int(location) for location in dereferences.keys()]
-    # lowest_location = min(destinations)
+    destinations = [data[str(seed)][MAP_SECTIONS[-1]] for seed in data["seeds"]]
+    lowest_location = min(destinations)
     print(f"{destinations=}")
-    # print(f"{dereferences=}")
-    # print(f"{lowest_location=}")
-    # 1901414562 -> too high
-    # 403088009 -> too high
+    print(f"{lowest_location=}")
