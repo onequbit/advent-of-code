@@ -55,6 +55,7 @@ Update your analysis by handling situations where the Problem Dampener can remov
 """
 from enum import Enum
 from math import copysign
+from operator import is_
 from icecream import ic
 
 SAMPLE_FILE = "day2_sample.txt"
@@ -73,84 +74,58 @@ def load_data(filename):
 
 def strictly_increasing(L):
     return all( x < y for x, y in zip(L, L[1:]))
-
-
+    
 def strictly_decreasing(L):
     return all( x > y for x, y in zip(L, L[1:]))
-
 
 def strictly_monotonic(L):
     return strictly_increasing(L) or strictly_decreasing(L)
 
-
 def find_unstable(items):
     deltas = [abs(x-y) for x, y in zip(items[:-1], items[1:])]
-    unstable = [items[i-1] for i, d in enumerate(deltas) if d > 3]
-    if unstable:
-        print(f"[{items}... unstable items: {unstable}")
+    unstable = [items[i+1] for i, d in enumerate(deltas) if d > 3]
     return unstable
-
 
 def find_reversals(items):
-    deltas = [copysign(1, x-y) for x, y in zip(items, items[1:])]
+    signs = [copysign(1, x-y) for x, y in zip(items, items[1:])]
+    # ic(signs)
     reversals = []
-    for index, delta in enumerate(deltas[:-1]):
-        next_delta = deltas[index+1]
-        if delta != next_delta:
+    for index, delta in enumerate(signs[:-1]):
+        next_sign = signs[index+1]
+        if delta != next_sign:
             reversals.append(items[index+1])
-    # ic(items, deltas, reversals)
     return reversals
 
-def is_stable(report):
-    unstable_items = find_unstable(report)
-    if unstable_items:
-        print(report, unstable_items)
-    unstable = len(unstable_items) == 0
-    return unstable
-
-
 def duplicate_found(number_list):
-    numbers = set(number_list)
     duplicates = []
-    for num in numbers:
+    for num in number_list:
+        if num in duplicates:
+            continue
         if number_list.count(num) > 1:
             duplicates.append(num)
     return duplicates
 
-def is_safe(report):
-    unstable_items = find_unstable(report)
-    if len(unstable_items) != 0:
-        print(f"{report} unstable: {unstable_items}")
-        return False
-    found = duplicate_found(report)
-    if found: 
-        print(f"duplicates {found=}")
-        return False
-    monotonic = strictly_monotonic(report)
-    if not monotonic:
-        print(f"not monotonic: {report}")    
-        return False
-    return True
-
-def find_unsafe(report):
-    unsafe = []
+def find_unsafe_levels(report):
     unstables = find_unstable(report)
-    if len(unstables) == 1:
-        unsafe += unstables
-    found = duplicate_found(report)
-    if len(found) == 1:
-        unsafe += found
+    duplicates_found = duplicate_found(report)
     reversals = find_reversals(report)
-    if len(reversals) > 0:
-        unsafe += reversals
-    return unsafe
+    unsafe_levels = list(set(unstables + duplicates_found + reversals))
+    if len(unsafe_levels) > 0:
+        ic(unsafe_levels, report)
+    return unsafe_levels
+
+def is_safe(report):
+    return len(find_unsafe_levels(report)) == 0
+    # monotonic = strictly_monotonic(report)
+    # duplicates_found = duplicate_found(report)
+    # unstable_items = find_unstable(report)
+    # return monotonic and (not duplicates_found) and (not unstable_items) 
 
 def part_one(datafile:str):
     safe_count = 0
     report_data = load_data(datafile)
     for line in report_data:
         if is_safe(line):
-            # ic(line, "safe")
             safe_count += 1
     print(f"part 1: {safe_count=}")
 
@@ -159,6 +134,7 @@ def part_two(datafile:str):
     safe_count = 0
     report_data = load_data(datafile)
     safe_reports = []
+    saved_lines = []
     for line in report_data:
         if not line:
             break
@@ -166,21 +142,23 @@ def part_two(datafile:str):
             # print(f"*{line}******************** SAFE")
             safe_reports.append(line)
         else:
-            unsafe = list(set(find_unsafe(line)))
-            if len(unsafe) == 1:
-                modified_line = list(line)
-                modified_line.remove(unsafe[0])
-                print(f"unsafe: {line}, {modified_line=}")
-                # ic(modified_line)
-                _is_modified_safe = is_safe(modified_line)
-                if _is_modified_safe:
-                    # print(f"*{line}******************** SAFE")
-                    safe_reports.append(modified_line)
-    safe_count = len(safe_reports)
+            print("----------------------------------------------------------")
+            print(line)
+            unsafe = list(set(find_unsafe_levels(line)))
+            for item in unsafe:
+                modified_line = line.copy()
+                modified_line.remove(item)
+                if is_safe(modified_line):
+                    saved_lines.append(modified_line)
+                    print(f"*** SAVED! {modified_line} ***")
+                    break
+    ic(len(saved_lines))
+    ic(len(safe_reports))
+    safe_count = len(safe_reports + saved_lines)
     print(f"part 2: {safe_count=}")
 
 
 
 if __name__ == "__main__":
-    # part_one(INPUT_FILE)  # 624
-    part_two(INPUT_FILE)  # 649 <-- too low!
+    part_one(INPUT_FILE)  # 624
+    part_two(INPUT_FILE)  # 651 <-- too low!
