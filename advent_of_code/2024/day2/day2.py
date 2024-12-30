@@ -53,17 +53,12 @@ Thanks to the Problem Dampener, 4 reports are actually safe!
 Update your analysis by handling situations where the Problem Dampener can remove a single level from unsafe reports. How many reports are now safe?
 
 """
-from enum import Enum
+
 from math import copysign
-from operator import is_
 from icecream import ic
 
 SAMPLE_FILE = "day2_sample.txt"
 INPUT_FILE = "day2_input.txt"
-
-
-class DuplicateException(Exception):
-    pass
 
 
 def load_data(filename):
@@ -73,28 +68,18 @@ def load_data(filename):
 
 
 def strictly_increasing(L):
-    return all( x < y for x, y in zip(L, L[1:]))
+    return all(x < y for x, y in zip(L, L[1:]))
     
 def strictly_decreasing(L):
-    return all( x > y for x, y in zip(L, L[1:]))
+    return all(x > y for x, y in zip(L, L[1:]))
 
 def strictly_monotonic(L):
     return strictly_increasing(L) or strictly_decreasing(L)
 
 def find_unstable(items):
     deltas = [abs(x-y) for x, y in zip(items[:-1], items[1:])]
-    unstable = [items[i+1] for i, d in enumerate(deltas) if d > 3]
-    return unstable
-
-def find_reversals(items):
-    signs = [copysign(1, x-y) for x, y in zip(items, items[1:])]
-    # ic(signs)
-    reversals = []
-    for index, delta in enumerate(signs[:-1]):
-        next_sign = signs[index+1]
-        if delta != next_sign:
-            reversals.append(items[index+1])
-    return reversals
+    unstable = [items[i] for i, d in enumerate(deltas) if d > 3]
+    return list(set(unstable))
 
 def duplicate_found(number_list):
     duplicates = []
@@ -105,23 +90,17 @@ def duplicate_found(number_list):
             duplicates.append(num)
     return duplicates
 
-def find_unsafe_levels(report):
-    unstables = find_unstable(report)
-    duplicates_found = duplicate_found(report)
-    reversals = find_reversals(report)
-    unsafe_levels = list(set(unstables + duplicates_found + reversals))
-    if len(unsafe_levels) > 0:
-        ic(unsafe_levels, report)
-    return unsafe_levels
-
 def is_safe(report):
-    return len(find_unsafe_levels(report)) == 0
-    # monotonic = strictly_monotonic(report)
-    # duplicates_found = duplicate_found(report)
-    # unstable_items = find_unstable(report)
-    # return monotonic and (not duplicates_found) and (not unstable_items) 
+    monotonic = strictly_monotonic(report)
+    if not monotonic:
+        return False
+    if len(duplicate_found(report)) > 0:
+        return False
+    if len(find_unstable(report)) > 0:
+        return False
+    return True
 
-def part_one(datafile:str):
+def part_one(datafile: str):
     safe_count = 0
     report_data = load_data(datafile)
     for line in report_data:
@@ -129,36 +108,32 @@ def part_one(datafile:str):
             safe_count += 1
     print(f"part 1: {safe_count=}")
 
-
-def part_two(datafile:str):
-    safe_count = 0
+def part_two(datafile: str):
+    safe = 0
     report_data = load_data(datafile)
-    safe_reports = []
-    saved_lines = []
-    for line in report_data:
-        if not line:
-            break
-        if is_safe(line):
-            # print(f"*{line}******************** SAFE")
-            safe_reports.append(line)
-        else:
-            print("----------------------------------------------------------")
-            print(line)
-            unsafe = list(set(find_unsafe_levels(line)))
-            for item in unsafe:
-                modified_line = line.copy()
-                modified_line.remove(item)
-                if is_safe(modified_line):
-                    saved_lines.append(modified_line)
-                    print(f"*** SAVED! {modified_line} ***")
-                    break
-    ic(len(saved_lines))
-    ic(len(safe_reports))
-    safe_count = len(safe_reports + saved_lines)
-    print(f"part 2: {safe_count=}")
+    ic(len(report_data))
 
+    def report_is_safe(seq, safe_range):
+        for i in range(1, len(seq)):
+            if seq[i] - seq[i-1] not in safe_range:
+                return False
+        return True    
+    
+    increasing = range(1, 4)
+    decreasing = range(-3, 0)
+    for line in report_data:
+        safe += any(
+            report_is_safe(line[:i] + line[i+1:], safe_range) 
+            for safe_range in (increasing, decreasing)
+            for i in range(len(line)) 
+        )
+    
+    print(f"part 2: {safe=}")    
 
 
 if __name__ == "__main__":
     part_one(INPUT_FILE)  # 624
     part_two(INPUT_FILE)  # 651 <-- too low!
+    # 655 <-- wrong
+    # 673 <-- wrong
+    # 833 <-- too high
