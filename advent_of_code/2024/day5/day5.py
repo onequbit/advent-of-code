@@ -97,6 +97,7 @@ Find the updates which are not in the correct order. What do you get if you add 
 
 from icecream import ic
 
+
 def load_data(filename):
     lines = open(filename, "r", encoding="utf-8").readlines()
     rules = []
@@ -107,8 +108,8 @@ def load_data(filename):
             rules.append((int(a), int(b)))
         elif len(line) > 1:
             updates.append([int(a) for a in line.split(",")])
-
     return rules, updates
+
 
 def get_rule_lookup(rules):
     rule_lookup = {}
@@ -119,63 +120,83 @@ def get_rule_lookup(rules):
             rule_lookup[before].append(after)
     return rule_lookup
 
+
+def is_valid(sequence, rule_lookup):
+    sequence_is_valid = True
+    for index, _ in enumerate(sequence):
+        if index == 0:
+            continue
+        before, after = sequence[index-1], sequence[index]
+        try:
+            if before in rule_lookup[after]:
+                sequence_is_valid = False
+                break
+        except:
+            pass
+    return sequence_is_valid
+
+
 def filter_sequences(rules, updates, rule_lookup):
     valid_updates = []
     invalid_updates = []
     for sequence in updates:
-        is_valid = True
-        for index, _ in enumerate(sequence[:-1]):
-            before, after = sequence[index], sequence[index+1]
-            try:
-                if before in rule_lookup[after]:
-                    is_valid = False
-                    # ic("input:", before, after)
-                    # print(f"{rule_lookup[after]=}")
-                    # print(sequence)
-                    break
-            except:
-                pass
-        if is_valid:
+        if is_valid(sequence, rule_lookup):
             valid_updates.append(sequence)
         else:
             invalid_updates.append(sequence)
     return (valid_updates, invalid_updates)
 
+
 def part_one(input_file):
     rules, updates = load_data(input_file)
     rule_lookup = get_rule_lookup(rules)
+    print(f"{rule_lookup=}")
     (valid_updates, invalid_updates) = filter_sequences(rules, updates, rule_lookup)
-    # print(f"{valid_updates=}")
     middles = [sequence[len(sequence)//2] for sequence in valid_updates]
-    # print(f"{middles=}")
     total = sum(middles)
-    print(f"part one {total=}")
+    print(f"{total=}")
+    return total
+
+def make_valid(sequence, rule_lookup):
+    sequence_is_valid = is_valid(sequence, rule_lookup)
+    while not sequence_is_valid:    
+        for index, number in enumerate(sequence):
+            if index == 0:
+                continue
+            before, after = sequence[index-1], sequence[index]
+            if after in rule_lookup and before in rule_lookup[after]:
+                sequence[index-1], sequence[index] = sequence[index], sequence[index-1] 
+        sequence_is_valid = is_valid(sequence, rule_lookup)
+    return sequence
 
 def part_two(input_file):
     rules, updates = load_data(input_file)
     rule_lookup = get_rule_lookup(rules)
-    (valid_updates, invalid_updates) = filter_sequences(rules, updates, rule_lookup)
+    ic(rule_lookup)
+    (_, invalid_updates) = filter_sequences(rules, updates, rule_lookup)
     
-    for sequence in invalid_updates:
-        print(f"{sequence=}")
-        for index, number in enumerate(sequence[:-1]):
-            before, after = sequence[index], sequence[index+1]
-            try:
-                print(f"{before=}, {after=}, {rule_lookup[after]}")
-                if before in rule_lookup[after]:
-                    sequence[index], sequence[index+1] = sequence[index+1], sequence[index]
-            except:
-                pass
+    for index, sequence in enumerate(invalid_updates):
+        invalid_updates[index] = make_valid(sequence, rule_lookup)
         print(f"fixed: {sequence}")
-    
     middles = [sequence[len(sequence)//2] for sequence in invalid_updates]
     print(f"{middles=}")
     total = sum(middles)
-    print(f"part two {total=}")
-    # 5713 <-- too high
+    return total
 
 
 if __name__ == "__main__":
-    input_file = "day5_sample.txt"
-    part_one(input_file) # 5713
-    part_two(input_file)
+    # input_file = "day5_sample.txt"
+    input_file = "day5_input.txt"
+    part_one_answer = part_one(input_file)
+    print(f"{part_one_answer=}") 
+
+    part_two_answer = part_two(input_file)
+    print(f"{part_two_answer=}") 
+
+    if "input" in input_file:
+        assert part_one_answer == 5713, f"{part_one_answer=} != 5713"
+        assert part_two_answer == 5180, f"{part_two_answer=} != 5180"
+
+    if "sample" in input_file:
+        assert part_one_answer == 143, f"{part_one_answer=} != 143"
+        assert part_two_answer == 123, f"{part_two_answer=} != 123"
