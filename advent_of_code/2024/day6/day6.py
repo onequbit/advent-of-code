@@ -185,32 +185,38 @@ You need to get the guard stuck in a loop by adding a single new obstruction. Ho
 
 """
 
+
 from icecream import ic
 from enum import Enum
 
 
 class Facing(Enum):
-    WEST = 0, "West"
-    NORTH = 1, "North"
-    EAST = 2, "East"
-    SOUTH = 3, "South"
+    NORTH = 0, "North"
+    EAST = 1, "East"
+    SOUTH = 2, "South"
+    WEST = 3, "West"
 
-SYMBOLS = "<^>v"
+SYMBOLS = "^>v<urdl"
+
+HISTORY = "urdl"
 
 COMPASS = {
-    "<": Facing.WEST,
-    "^": Facing.NORTH,
+    "^": Facing.NORTH,    
     ">": Facing.EAST,
-    "v": Facing.SOUTH
+    "v": Facing.SOUTH,
+    "<": Facing.WEST,
 }
 
 DIRECTION = {
-    chr(ord("<")): (-1, 0),
     chr(ord("^")): (0, -1),
     chr(ord(">")): (1, 0),
-    chr(ord("v")): (0, 1)
+    chr(ord("v")): (0, 1),
+    chr(ord("<")): (-1, 0),
+    chr(ord("u")): (0, -1),
+    chr(ord("r")): (1, 0),
+    chr(ord("d")): (0, 1),
+    chr(ord("l")): (-1, 0),
 }
-
 
 
 def load_data(filename):
@@ -247,7 +253,7 @@ def is_valid_position(guard_map, next_x, next_y):
 def turn(guard_map, x, y):
     facing = guard_map[y][x]
     # ic("turn", facing)
-    next_face = (SYMBOLS.index(str(facing))+1) % len(SYMBOLS)
+    next_face = (SYMBOLS.index(str(facing))+1) % 4
     return SYMBOLS[next_face]
 
 
@@ -255,30 +261,54 @@ def next_obstacle(guard_map, x=None, y=None):
     if not x or not y:
         x, y = get_position(guard_map)
     facing = guard_map[y][x]
-    # ic("next_obstacle", facing)
     steps = 0
-    # ic(x, y, guard_map[y][x], facing, DIRECTION)
     delta_x, delta_y = DIRECTION[facing]
     next_x = x + (delta_x * steps)
     next_y = y + (delta_y * steps)
     valid_position = is_valid_position(guard_map, next_x, next_y)
-    guard_map[y][x] = "X"
+    # guard_map[y][x] = SYMBOLS[facing]"X"
     while valid_position:
         if guard_map[next_y][next_x] == "#":
             next_x = delta_x * (steps-1)
             next_y = delta_y * (steps-1)
             guard_map[y + next_y][x + next_x] = facing
             break
-        guard_map[next_y][next_x] = "X"
+        if guard_map[next_y][next_x] not in SYMBOLS:
+            guard_map[next_y][next_x] = "X"
         steps += 1
         next_x = x + (delta_x * steps)
         next_y = y + (delta_y * steps)
-        # ic(steps, next_x, next_y)
         valid_position = is_valid_position(guard_map, next_x, next_y)
     return next_x, next_y
     
 
 def part_one(input_file):
+    guard_map = load_data(input_file)
+    print(*guard_map, sep="\n")
+    x, y = get_position(guard_map)
+    facing = guard_map[y][x]
+    guard_map[y][x] = HISTORY[SYMBOLS.index(facing)]
+    while True:
+        _x, _y = next_obstacle(guard_map, x, y)
+        x += _x
+        y += _y
+        if not is_valid_position(guard_map, x, y):
+            break
+        guard_map[y][x] = turn(guard_map, x, y)
+        facing = guard_map[y][x]
+        guard_map[y][x] = HISTORY[SYMBOLS.index(facing)]
+    print("=" * len(guard_map[0]) * 5)
+    count = 0
+    for line in guard_map:
+        for position in line:
+            if position == "X":
+                count += 1
+    print(*guard_map, sep="\n")
+    return count
+
+
+def part_two(input_file):
+    stopped_positions = []
     guard_map = load_data(input_file)
     print(*guard_map, sep="\n")
     x, y = get_position(guard_map)
@@ -288,25 +318,76 @@ def part_one(input_file):
         y += _y
         if not is_valid_position(guard_map, x, y):
             break
-        # ic(x, y, guard_map[y][x])
-        guard_map[y][x] = turn(guard_map, x, y)    
+        guard_map[y][x] = turn(guard_map, x, y)
+        stopped_positions.append(dict(x=x, y=y, facing=guard_map[y][x]))    
     print("=" * len(guard_map[0]) * 5)
-    print(*guard_map, sep="\n")
     count = 0
     for line in guard_map:
         for position in line:
             if position == "X":
                 count += 1
-    return count
+    return stopped_positions
+
+
+# def get_obstacles(guard_map):
+#     obstacles = {}
+#     for y, row in enumerate(guard_map):
+#         for x, cell in enumerate(row):
+#             if cell == "#":
+#                 obstacles[(x,y)] = ""
+#     return obstacles
+
+
+# def get_location(guard_map):
+#     for y, row in enumerate(guard_map):
+#         for x, cell in enumerate(row):
+#             if cell in SYMBOLS:
+#                 return (x, y)
+#     raise Exception("map position not found")
+
+
+# def part_two(input_file):
+#     guard_map = load_data(input_file)
+#     if "sample" in input_file:
+#         print(*guard_map, sep="\n")
+#     startposition = get_location(guard_map)
+#     print(startposition)
+#     obstacles = get_obstacles(guard_map)
+#     print(f"{obstacles=}")
+#     """
+#     from starting position, 
+#     find the first facing obstacle ahead
+#     if no obstacles, exit loop
+#     calculate the stopped position and turn
+#     loop as starting position
+#     """
+#     while True:
+#         """
+#         given a position and direction, determine the 
+#         """
+    
+    # print(f"{rows=}")
+    # print(f"{columns=}")
+    # rows = [row for row in rows if row not in [0,(len(rows)-1)]]
+    # columns = [column for column in columns if column not in [0,(len(columns)-1)]]
+    # print(f"{rows=}")
+    # print(f"{columns=}")
+    # ic(len(rows), len(columns))
+    return "answer"
+    # 831 <-- too low
 
 if __name__ == "__main__":
-    # input_file = "day6_sample.txt"
-    input_file = "day6_input.txt"
+    input_file = "day6_sample.txt"  # <-- 10 x 10
+    # input_file = "day6_input.txt"  # <-- 130 x 130
 
     part_one_answer = part_one(input_file)
     ic("part_one:", part_one_answer)
-    if "sample" in input_file:
-        assert part_one_answer == 41, f"{part_one_answer=}"
-    if "input" in input_file:
-        assert part_one_answer == 4580, f"{part_one_answer=}"
+
+    # part_two_answer = part_two(input_file)
+    # ic("part_two:", part_two_answer)
+
+    # if "sample" in input_file:
+    #     assert part_one_answer == 41, f"{part_one_answer=}"
+    # if "input" in input_file:
+    #     assert part_one_answer == 4580, f"{part_one_answer=}"
 
